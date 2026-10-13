@@ -108,7 +108,7 @@ maintainer = "Alacritty Contributors"
 copyright = "2016-2026 Alacritty Contributors"
 license-file = ["../LICENSE-APACHE", "4"]
 extended-description = "Alacritty is a modern terminal emulator that comes with sensible defaults, but allows for extensive configuration. By integrating with other applications, rather than reimplementing their functionality, it manages to provide a flexible set of features with high performance."
-depends = "$auto"
+depends = "$auto, ncurses-term"
 section = "x11"
 priority = "optional"
 assets = [
@@ -124,6 +124,4 @@ assets = [
     ["../extra/man/alacritty.5.gz", "usr/share/man/man5/alacritty.5.gz", "644"],
     ["../extra/man/alacritty-bindings.5.gz", "usr/share/man/man5/alacritty-bindings.5.gz", "644"],
     ["../extra/man/alacritty-escapes.7.gz", "usr/share/man/man7/alacritty-escapes.7.gz", "644"],
-    ["target/release/terminfo/a/alacritty", "usr/share/terminfo/a/alacritty", "644"],
-    ["target/release/terminfo/a/alacritty-direct", "usr/share/terminfo/a/alacritty-direct", "644"],
 ]
