@@ -93,7 +93,7 @@ $(ASSETS_DIR)/man/%.gz: $(ASSETS_DIR)/man/%.scd
 terminfo: ## Compile the terminfo database
 	@tic -xe alacritty,alacritty-direct -o $(TERMINFO_DIR) $(TERMINFO)
 
-deb: man-pages terminfo ## Create a Debian package
+deb: man-pages ## Create a Debian package
 	cargo deb -p $(TARGET) --dbgsym
 
 .PHONY: app binary clean deb dmg install man-pages terminfo $(TARGET) $(TARGET)-universal
