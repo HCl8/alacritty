@@ -13,6 +13,13 @@ COMPLETIONS = $(COMPLETIONS_DIR)/_alacritty \
 	$(COMPLETIONS_DIR)/alacritty.bash \
 	$(COMPLETIONS_DIR)/alacritty.fish
 
+MANPAGES = $(ASSETS_DIR)/man/alacritty.1.gz \
+	$(ASSETS_DIR)/man/alacritty-msg.1.gz \
+	$(ASSETS_DIR)/man/alacritty.5.gz \
+	$(ASSETS_DIR)/man/alacritty-bindings.5.gz \
+	$(ASSETS_DIR)/man/alacritty-escapes.7.gz
+TERMINFO_DIR = $(RELEASE_DIR)/terminfo
+
 APP_NAME = Alacritty.app
 APP_TEMPLATE = $(ASSETS_DIR)/osx/$(APP_NAME)
 APP_DIR = $(RELEASE_DIR)/osx
@@ -79,7 +86,17 @@ install-universal: $(INSTALL)-native ## Mount universal disk image
 $(INSTALL)-%: $(DMG_NAME)-%
 	@open $(DMG_DIR)/$(DMG_NAME)
 
-.PHONY: app binary clean dmg install $(TARGET) $(TARGET)-universal
+man-pages: $(MANPAGES) ## Generate the compressed man pages
+$(ASSETS_DIR)/man/%.gz: $(ASSETS_DIR)/man/%.scd
+	@scdoc < $< | gzip -c > $@
+
+terminfo: ## Compile the terminfo database
+	@tic -xe alacritty,alacritty-direct -o $(TERMINFO_DIR) $(TERMINFO)
+
+deb: man-pages terminfo ## Create a Debian package
+	cargo deb -p $(TARGET)
+
+.PHONY: app binary clean deb dmg install man-pages terminfo $(TARGET) $(TARGET)-universal
 
 clean: ## Remove all build artifacts
 	@cargo clean

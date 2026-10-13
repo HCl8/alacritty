@@ -122,6 +122,12 @@ pub struct Window {
     current_mouse_cursor: CursorIcon,
     mouse_visible: bool,
     ime_inhibitor: ImeInhibitor,
+
+    /// The last cursor area sent to the input method.
+    ///
+    /// Used to avoid committing identical state on every frame, since some compositors treat
+    /// each commit as a state change.
+    ime_cursor_area: Option<(PhysicalPosition<f64>, PhysicalSize<f64>)>,
 }
 
 impl Window {
@@ -214,6 +220,7 @@ impl Window {
             window,
             is_x11,
             ime_inhibitor: Default::default(),
+            ime_cursor_area: None,
         })
     }
 
@@ -443,11 +450,15 @@ impl Window {
         if self.ime_inhibitor.contains(inhibitor) != inhibit {
             self.ime_inhibitor.set(inhibitor, inhibit);
             self.window.set_ime_allowed(self.ime_inhibitor.is_empty());
+
+            // The input method may have dropped the cursor area while IME was disabled, so
+            // force the next update to be sent unconditionally.
+            self.ime_cursor_area = None;
         }
     }
 
     /// Adjust the IME editor position according to the new location of the cursor.
-    pub fn update_ime_position(&self, point: Point<usize>, size: &SizeInfo) {
+    pub fn update_ime_position(&mut self, point: Point<usize>, size: &SizeInfo) {
         // NOTE: X11 doesn't support cursor area, so we need to offset manually to not obscure
         // the text.
         let offset = if self.is_x11 { 1 } else { 0 };
@@ -461,10 +472,17 @@ impl Window {
         let width = size.cell_width() as f64 * 2.;
         let height = size.cell_height as f64;
 
-        self.window.set_ime_cursor_area(
-            PhysicalPosition::new(nspot_x, nspot_y),
-            PhysicalSize::new(width, height),
-        );
+        let position = PhysicalPosition::new(nspot_x, nspot_y);
+        let cursor_size = PhysicalSize::new(width, height);
+
+        // This runs on every frame, but some compositors translate every commit into a state
+        // change, so avoid committing an area the input method already knows about.
+        if self.ime_cursor_area == Some((position, cursor_size)) {
+            return;
+        }
+        self.ime_cursor_area = Some((position, cursor_size));
+
+        self.window.set_ime_cursor_area(position, cursor_size);
     }
 
     /// Disable macOS window shadows.
